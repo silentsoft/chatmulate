@@ -72,6 +72,8 @@ def process_queue(user_prompt, chat_language, chat_count):
                     messages_to_add.append(message)
                 with chat_logs_lock:
                     chat_logs.extend(messages_to_add)
+                with system_logs_lock:
+                    system_logs.append(f"[Generated {len(messages_to_add)} chat messages]")
             except Exception as e:
                 with system_logs_lock:
                     system_logs.append(f"[Failed to generate chat messages]\n{e}")
