@@ -55,7 +55,7 @@ def capture_audio(audio_file):
             image_buffer[:] = []
     else:
         with system_logs_lock:
-            system_logs.append("VO not generated: insufficient images in last 10 seconds.")
+            system_logs.append("[Skip] Insufficient images in last 10 seconds.")
 
 
 def process_queue(user_prompt, chat_language, chat_count):
@@ -115,52 +115,65 @@ def toggle_chat(user_prompt, chat_language_key, chat_count):
     else:
         button_label = "Start"
 
-    status = "Started" if running else "Stopped"
     with chat_logs_lock:
         logs_str = "\n".join(chat_logs)
-    return button_label, status, logs_str
+    return button_label, logs_str
 
 
 def create_ui():
     with gr.Blocks() as chatmulate:
-        gr.Markdown("# Chatmulate - AI Stream Chat Simulator")
+        gr.Markdown("# Chatmulate")
+        with gr.Sidebar(position="left"):
+            with gr.Row():
+                api_key = gr.Textbox(value=get_openai_api_key(), label="OpenAI API Key", type="password")
+                api_key.change(set_openai_api_key, inputs=api_key)
 
-        api_key = gr.Textbox(value=get_openai_api_key(), label="OpenAI API Key", type="password")
-        api_key.change(set_openai_api_key, inputs=api_key)
+                api_model_dropdown = gr.Dropdown(
+                    choices=[(m, m) for m in get_openai_api_models()],
+                    value=get_openai_api_model(),
+                    label="OpenAI API Model"
+                )
+                api_model_dropdown.change(fn=set_openai_api_model, inputs=api_model_dropdown)
 
-        api_model_dropdown = gr.Dropdown(
-            choices=[(m, m) for m in get_openai_api_models()],
-            value=get_openai_api_model(),
-            label="OpenAI API Model"
-        )
-        api_model_dropdown.change(fn=set_openai_api_model, inputs=api_model_dropdown)
+                user_prompt_input = gr.Textbox(label="Chat Behavior Rules",
+                                               placeholder="Describe how AI should behave...",
+                                               lines=5, max_lines=5)
 
-        user_prompt_input = gr.Textbox(label="Chat Behavior Rules", placeholder="Describe how AI should behave...")
+                language_dropdown = gr.Dropdown(
+                    choices=[(v, k) for k, v in LANGUAGES.items()],
+                    value=get_system_language(),
+                    label="Chat Language"
+                )
 
-        chat_count_slider = gr.Slider(minimum=1, maximum=50, step=1, value=5, label="Number of Chat Responses")
+                chat_count_slider = gr.Slider(minimum=1, maximum=50, step=1, value=10, label="Number of Chat Messages")
 
-        video_input = gr.Image(sources=["webcam"], label="Webcam Stream", mirror_webcam=False)
-        video_input.stream(capture_video_frame, video_input, stream_every=2)
+                start_stop_button = gr.Button("Start")
 
-        audio_input = gr.Audio(sources=["microphone"], type="filepath", label="Microphone Input")
-        audio_input.stream(capture_audio, audio_input, stream_every=10)
+        with gr.Row():
+            with gr.Accordion("Input Devices"):
+                video_input = gr.Image(sources=["webcam"], label="Video Input",
+                                       mirror_webcam=False,
+                                       webcam_constraints={
+                                           "video": {
+                                               "width": 1920,
+                                               "height": 1080
+                                           }
+                                       })
+                video_input.stream(capture_video_frame, video_input, stream_every=2)
 
-        language_dropdown = gr.Dropdown(
-            choices=[(v, k) for k, v in LANGUAGES.items()],
-            value=get_system_language(),
-            label="Chat Language"
-        )
+                audio_input = gr.Audio(sources=["microphone"], type="filepath", label="Microphone Input")
+                audio_input.stream(capture_audio, audio_input, stream_every=10)
 
-        system_output = gr.Textbox(label="System Logs", lines=5, max_lines=5)
-
-        start_stop_button = gr.Button("Start")
-        chat_status = gr.Textbox(value="Stopped", label="Chat Status")
-        chat_output = gr.Textbox(label="AI Chat Output", lines=5, max_lines=5)
+        with gr.Row():
+            with gr.Column():
+                system_output = gr.Textbox(label="System Logs", lines=10, max_lines=10)
+            with gr.Column():
+                chat_output = gr.Textbox(label="Chat Messages", lines=10, max_lines=10)
 
         start_stop_button.click(
             toggle_chat,
             inputs=[user_prompt_input, language_dropdown, chat_count_slider],
-            outputs=[start_stop_button, chat_status, chat_output]
+            outputs=[start_stop_button, chat_output]
         )
 
         timer = gr.Timer(1)
