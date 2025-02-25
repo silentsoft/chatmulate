@@ -5,6 +5,8 @@
 **Chatmulate** is a real-time, multimodal AI chat simulator that captures video and audio streams from your webcam and microphone, processes the data using OpenAI APIs, and generates engaging AI chat messages.
 Built with Python and Gradio, this application is ideal for streaming and creative AI-driven content generation.
 
+![Chatmulate](.document/app.png)
+
 ## Features
 
 - **Real-time Streaming:**  
