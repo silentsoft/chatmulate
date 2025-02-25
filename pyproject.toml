@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "chatmulate"
+version = "0.1.0"
+description = "A real-time multimodal AI chat simulator that captures webcam and microphone streams to generate interactive chat messages via OpenAI APIs."
+authors = ["silentsoft <hyesung.lee@silentsoft.org>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+gradio = "^5.16.0"
+openai = "^1.62.0"
+python-dotenv = "^1.0.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+
+[tool.poetry.scripts]
+chatmulate = "chatmulate.app:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
